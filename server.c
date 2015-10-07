@@ -56,6 +56,8 @@ int main (int argc, char *argv[]) {
 		}
 		else
 			close(newsockfd);
+
+		waitpid(-1, NULL, WNOHANG); // Let child process die (we don't want the zombie problem)
 	}
 
 	/* We'll never get past this point due to the infinite loop above */
