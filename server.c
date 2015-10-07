@@ -93,8 +93,8 @@ void dostuff(int sock) {
 	printf("Client Request: \n%s\n", message);
 
     /* Parse the client request */
-    char* RequestLine = strtok(message, "\n");
-    char* Req_Method = strtok(RequestLine, " ");
+	char* RequestLine = strtok(message, "\n");
+	char* Req_Method = strtok(RequestLine, " ");
 	char* Req_Path = strtok(NULL, " ");
 	char* Req_Version = strtok(NULL, " ");
 	if (Req_Path[0] =='/')			// Sets path to /index.html if / is requested
@@ -110,29 +110,30 @@ void dostuff(int sock) {
 		valid = 0;
 	}
 
-	if (valid == 1) {
+	if (valid == 1) { // If it's a valid HTTP request
 		/* Check request method and compose response accordingly */
-		if (strncmp(Req_Method,"GET",3) == 0 || strncmp(Req_Method,"HEAD",4) == 0) {
+		if (strncmp(Req_Method,"GET",3) == 0 || strncmp(Req_Method,"HEAD",4) == 0) { //If it's GET or HEAD
 			Resp_Header="HTTP/1.0 200 OK";
 			Resp_ContentLength = "\nContent-Length: 5";
 			Resp_ContentType = "\nContent-Type: text/html";
 			Resp_LastModified = "\nLast-Modified: Wed, 3 Feb 1992 16:00:00 GMT"; // TODO: get the actual date
-			if (strncmp(Req_Method,"GET",3) == 0) {
+			if (strncmp(Req_Method,"GET",3) == 0) {	// If GET include Body
 				snprintf(response,sizeof(response), "%s%s%s%s%s%s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server,Body);
-			} else {
+			} else {								// If HEAD do not include Body
 				snprintf(response,sizeof(response), "%s%s%s%s%s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server);
 			}
-		} else if (strncmp(Req_Method,"POST",4) == 0 && valid == 1){
+		} else if (strncmp(Req_Method,"POST",4) == 0 && valid == 1){ // If POST, return 501
 			Resp_Header="HTTP/1.0 501 Not Implemented";
 			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
-		} else {
+		} else { // If it's not GET, HEAD or POST, return 400
 			Resp_Header="HTTP/1.0 400 Bad Request";
 			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 		}
-	} else {
+	} else { // If request is invalid (valid = 0), return 400
 		Resp_Header="HTTP/1.0 400 Bad Request";
 		snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 	}
 
+	/* Writing to the socket (sending the response) */
 	n = write(sock,response, strlen(response)); if (n < 0) error("ERROR: failed to write to socket");
 }
