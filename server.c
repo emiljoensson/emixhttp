@@ -125,7 +125,6 @@ void RequestHandler(int sock) {
 	}
 
 	int sendBody = 1;
-	file = fopen(Req_Path, "r");
 
 	if (valid == 0) { // If it's an invalid HTTP request
 		Resp_Header="HTTP/1.0 400 Bad Request";
@@ -138,7 +137,7 @@ void RequestHandler(int sock) {
 
 			/* Checking if we find the requested file */
 
-			if (file) { // Found the file (200 OK)
+			if (access(Req_Path, F_OK) == 0 && access(Req_Path, R_OK) == 0) { // Found the file and can read (200 OK)
 				/* Figuring out Content-Length (check length of file) */
 				stat(Req_Path, &attr);
 				FileLength = (int)attr.st_size;
@@ -147,28 +146,31 @@ void RequestHandler(int sock) {
 				Resp_ContentLength = FileLength;
 				Resp_ContentType = "text/html";
 				Resp_LastModified = ctime(&attr.st_mtime);
-				snprintf(response,sizeof(response), "%s\nContent-Length: %d\nContent-Type: %s\nLast-Modified: %s\nServer: %s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server);
+				snprintf(response,sizeof(response), "%s\nContent-Length: %d\nContent-Type: %s\nLast-Modified: %sServer: %s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server);
 				if (strncmp(Req_Method,"HEAD",4) == 0) {
 					sendBody = 0;
 				}
+			} else if (access(Req_Path, F_OK) == 0 && access(Req_Path, R_OK) == -1) { // Found the file but can't read (403)
+				Resp_Header="HTTP/1.0 403 Forbidden";
+				Req_Path = "403.html";
+				snprintf(response,sizeof(response), "%s\nServer: %s",Resp_Header,Resp_Server);
 			} else { // Did NOT find the file (404 Not Found)
 				Resp_Header="HTTP/1.0 404 Not Found";
 				Req_Path = "404.html";
-				snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
+				snprintf(response,sizeof(response), "%s\nServer: %s",Resp_Header,Resp_Server);
 			}
-
 		} 
 
 		else if (strncmp(Req_Method,"POST",4) == 0 && valid == 1){ // If POST, return 501
 			Resp_Header="HTTP/1.0 501 Not Implemented";
 			Req_Path = "501.html";
-			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
+			snprintf(response,sizeof(response), "%s\nServer: %s",Resp_Header,Resp_Server);
 		}
 
 		else { // If it's not GET, HEAD or POST, return 400
 			Resp_Header="HTTP/1.0 400 Bad Request";
 			Req_Path = "400.html";
-			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
+			snprintf(response,sizeof(response), "%s\nServer: %s",Resp_Header,Resp_Server);
 		}
 	}
 
