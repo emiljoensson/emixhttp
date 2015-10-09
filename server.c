@@ -1,11 +1,12 @@
-#include <stdio.h> // Declarations used in most input/output
-#include <stdlib.h> // Defines several general purpose function
-#include <string.h> // Defines variable type and various functions for manipulating arrays of characters
-#include <unistd.h> // Needed to use getopt() etc to handle command line arguments better
-#include <sys/types.h> // Definitions of a number of data types used in system calls
-#include <sys/socket.h> // Includes a number of definitions of structures needed for sockets
+#include <stdio.h>		// Declarations used in most input/output
+#include <stdlib.h>		// Defines several general purpose function
+#include <string.h>		// Defines variable type and various functions for manipulating arrays of characters
+#include <unistd.h>		// Needed to use getopt() etc to handle command line arguments better
+#include <time.h>		// Needed when checking Last-Modified (ctime())
+#include <sys/types.h>	// Definitions of a number of data types used in system calls
+#include <sys/socket.h>	// Includes a number of definitions of structures needed for sockets
 #include <sys/stat.h>
-#include <netinet/in.h> // Constatns and structures needed for internet domain addresses
+#include <netinet/in.h>	// Constants and structures needed for internet domain addresses
 
 void error(char *msg);
 void RequestHandler(int);
@@ -86,10 +87,10 @@ void RequestHandler(int sock) {
 	char message[1024];	// The server reads characters from the socket connection in to this char array
 	char response[1024];
 	char *Resp_Header;
-	char *Resp_ContentLength;
+	int Resp_ContentLength;
 	char *Resp_ContentType;
 	char *Resp_LastModified;
-	char *Resp_Server = "\nServer: emix-http/0.1";
+	char *Resp_Server = "emix-http/0.1";
 
 	/* Reads from socket, read() will hold until theres something for it to read i the socket */
 	bzero(message, sizeof(message));
@@ -97,6 +98,7 @@ void RequestHandler(int sock) {
 	if (n < 0)
 		error("ERROR: failed to read from socket");
 
+	/* DEBUGGING , CONSOLE OUTPUT */
 	printf("Client Request: \n%s\n", message);
 
     /* Parse the client request */
@@ -107,6 +109,9 @@ void RequestHandler(int sock) {
 	if (Req_Path[0] =='/' && strlen(Req_Path) == 1) // Sets path to /index.html if / is requested
 		Req_Path = "index.html";
 
+	/* Maka a struct that stores the attributes of the file */
+	struct stat attr;
+	int FileLength;
 	FILE *file;
 
 	/* Check if it's a valid HTTP 1.0 method, if not set valid to 0 else continues */
@@ -133,36 +138,42 @@ void RequestHandler(int sock) {
 
 			/* Checking if we find the requested file */
 
-
 			if (file) { // Found the file (200 OK)
+				/* Figuring out Content-Length (check length of file) */
+				stat(Req_Path, &attr);
+				FileLength = (int)attr.st_size;
+				/* Setting the headers */
 				Resp_Header="HTTP/1.0 200 OK";
-				Resp_ContentLength = "\nContent-Length: 5";
-				Resp_ContentType = "\nContent-Type: text/html";
-				Resp_LastModified = "\nLast-Modified: Wed, 3 Feb 1992 16:00:00 GMT"; // TODO: get the actual date
-				snprintf(response,sizeof(response), "%s%s%s%s%s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server);
+				Resp_ContentLength = FileLength;
+				Resp_ContentType = "text/html";
+				Resp_LastModified = ctime(&attr.st_mtime);
+				snprintf(response,sizeof(response), "%s\nContent-Length: %d\nContent-Type: %s\nLast-Modified: %s\nServer: %s",Resp_Header,Resp_ContentLength,Resp_ContentType,Resp_LastModified,Resp_Server);
 				if (strncmp(Req_Method,"HEAD",4) == 0) {
 					sendBody = 0;
 				}
 			} else { // Did NOT find the file (404 Not Found)
 				Resp_Header="HTTP/1.0 404 Not Found";
-				snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 				Req_Path = "404.html";
+				snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 			}
 
 		} 
 
 		else if (strncmp(Req_Method,"POST",4) == 0 && valid == 1){ // If POST, return 501
 			Resp_Header="HTTP/1.0 501 Not Implemented";
-			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 			Req_Path = "501.html";
+			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 		}
 
 		else { // If it's not GET, HEAD or POST, return 400
 			Resp_Header="HTTP/1.0 400 Bad Request";
-			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 			Req_Path = "400.html";
+			snprintf(response,sizeof(response), "%s%s",Resp_Header,Resp_Server);
 		}
 	}
+
+	/* DEBUGGING , CONSOLE OUTPUT */
+	printf("\nOur response headers: %s\n", response);
 
 	/* Writing to the socket (sending the response) NOTE: Only the headers so far */
 	n = write(sock,response, strlen(response)); if (n < 0) error("ERROR: failed to write to socket");
@@ -171,12 +182,8 @@ void RequestHandler(int sock) {
 	if (sendBody == 1) {
 
 		file = fopen(Req_Path, "r");
-
-		/* Maka a struct that can store properties of file */
-		struct stat st;
-		int Bytes_Sent;
-		stat(Req_Path, &st);
-		Bytes_Sent = (int)st.st_size;
+		stat(Req_Path, &attr);
+		FileLength = (int)attr.st_size;
 
 		char sdbuf[8196];
 	    bzero(&sdbuf, sizeof(sdbuf));
@@ -185,13 +192,12 @@ void RequestHandler(int sock) {
 	    rewind(file);
 	    int line;
 	    write(sock,"\n\n",4); // Making two line breaks between headers and body
-	    while(bytes < Bytes_Sent){
+	    while(bytes < FileLength){
 	        line = fread(sdbuf, 1, sizeof(sdbuf), file);
 	        bytes += line;
 	        write(sock, sdbuf, line);
 	        bzero(&sdbuf, sizeof(sdbuf));
 	    }
-
 		fclose(file);
 	}
 }
