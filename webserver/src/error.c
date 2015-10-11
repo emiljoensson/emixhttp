@@ -1,6 +1,10 @@
-#ifndef ERROR_H
-#define ERROR_H
+#include <stdio.h>
+#include <stdlib.h>
 
-void error(char *);
+#include <error.h>
 
-#endif
+/* This function is called when a system call fails */
+void error (char *msg) {
+	perror(msg);
+	exit(1);
+}
