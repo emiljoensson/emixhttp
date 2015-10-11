@@ -29,8 +29,7 @@ void new_connection(int sock) {
 	if (n < 0)
 		error("ERROR: failed to read from socket");
 
-	/* DEBUGGING */
-	printf("\nClient Request: \n%s\n", message);
+	// printf("\nClient Request: \n%s\n", message); // Use for debugging
 
 	/* Parse the client request */
 	char* RequestLine = strtok(message, "\n");
@@ -141,8 +140,7 @@ void new_connection(int sock) {
 		}
 	}
 
-	/* DEBUGGING , CONSOLE OUTPUT */
-	printf("\nOur response headers: %s\n", response);
+	// printf("\nOur response headers: %s\n", response); // Use for debugging
 
 	/* Writing to the socket (sending the response) NOTE: Only the headers so far */
 	n = write(sock,response, strlen(response)); if (n < 0) error("ERROR: failed to write to socket");
@@ -157,8 +155,7 @@ void new_connection(int sock) {
 			strcat(finalPath, "/");
 		strcat(finalPath, Req_Path);
 
-		/* DEBUG */
-		printf("\nfinalPath: %s\n", finalPath);
+		// printf("\nfinalPath: %s\n", finalPath); // Use for debugging
 
 		file = fopen(finalPath, "r");
 		stat(finalPath, &attr);

@@ -18,16 +18,29 @@ int main (int argc, char *argv[]) {
 	int clilen; 			// Size of the address of the client, needed for the accept system call
 	int pid;				// Used for forking
 
-	/* TODO #1 - Read command line arguments:
-		-h (prints help text)
-		-p 80 (set portno to 80)
-		See lab specification section 2.5
-	*/
-
-	/* Check for argument count (temporary fix, remove when fixing TODO #1) */
+	/* Check for arguments */
 	if (argc < 2)
-		error("ERROR: no port specified");
-	portno = atoi(argv[1]); // Read port argument and put into portno
+		error("Invalid arguments. Please specify port with [-p N] (-h for help)");
+
+	if(strncmp(argv[1], "-h", 2) == 0) {
+		printf("Please specify port with [-p N]\n");
+		return 0; 
+	} else if(strncmp(argv[1], "-p", 2) == 0) {
+		if(argv[2] != NULL) {
+			if(atoi(argv[2]) > 1 && atoi(argv[2]) < 65535) {
+				portno = atoi(argv[2]);
+			} else {
+				printf("Invalid port number, should be between 1 and 65535.\n");
+				return 0;
+			}
+		} else {
+			printf("No port number specified.\n");
+			return 0;
+		}
+	} else {
+		printf("Invalid arguments. Please specify port with [-p N] (-h for help)\n");
+		return 0;
+	}
 
 	struct sockaddr_in serv_addr, cli_addr; // The structures containing an internet address
 
