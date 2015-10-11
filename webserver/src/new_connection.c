@@ -1,16 +1,7 @@
-#include <stdio.h>			// Declarations used in most input/output
-#include <stdlib.h>			// Defines several general purpose function
-#include <string.h>			// Defines variable type and various functions for manipulating arrays of characters
-#include <unistd.h>			// Needed to use getopt() etc to handle command line arguments better
-#include <time.h>			// Needed when checking Last-Modified (ctime())
-#include <sys/types.h>		// Definitions of a number of data types used in system calls
-#include <sys/socket.h>		// Includes a number of definitions of structures needed for sockets
-#include <sys/stat.h>		// stat() to obtain information about file
-#include <netinet/in.h>		// Constants and structures needed for internet domain addresses
-
+#include "error.h"
 #include "new_connection.h"
 
-void newConnection(int sock) {
+void new_connection(int sock) {
 	int valid = 1;		// Int to hold if request is valid or not (0/1)
 	int n; 				// The return value for the read() and write() calls, contains the number of characters read or written
 	char message[1024];	// The server reads characters from the socket connection in to this char array
