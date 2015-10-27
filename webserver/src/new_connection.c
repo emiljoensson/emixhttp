@@ -45,16 +45,16 @@ void new_connection(int sock) {
 	RootDir[strlen(RootDir)-9] = '\0'; // Parent folder of working directory
 
 	/* Appending Req_Path to our www root */
-	strcpy(AbsolutePath, RootDir);
-	strcat(AbsolutePath, "www");
+	strncpy(AbsolutePath, RootDir, sizeof(AbsolutePath));
+	strncat(AbsolutePath, "www", sizeof(AbsolutePath));
 	/* We save this as it's our www-root. Will be useful for in URL validation */
 	int wwwRootLen = strlen(AbsolutePath);
 	char wwwRoot[wwwRootLen];
-	strcpy(wwwRoot, AbsolutePath);
+	strncpy(wwwRoot, AbsolutePath, sizeof(wwwRoot));
 	/* Finally we append Req_Path to the www-root */
 	if (Req_Path[0] != '/') // Deal with trailing slash
-		strcat(AbsolutePath, "/");
-	strcat(AbsolutePath, Req_Path);
+		strncat(AbsolutePath, "/", sizeof(AbsolutePath));
+	strncat(AbsolutePath, Req_Path, sizeof(AbsolutePath));
 
 	char PathBuf[PATH_MAX + 1]; // not sure about the "+ 1"
 	realpath(AbsolutePath, PathBuf); // Change relative path to absolute path, used for URL validation
@@ -150,10 +150,10 @@ void new_connection(int sock) {
 
 		int finalPathLen = wwwRootLen + strlen(Req_Path);
 		char finalPath[finalPathLen];
-		strcpy(finalPath, wwwRoot);
+		strncpy(finalPath, wwwRoot, sizeof(finalPath));
 		if (Req_Path[0] != '/') // Deal with trailing slash
-			strcat(finalPath, "/");
-		strcat(finalPath, Req_Path);
+			strncat(finalPath, "/", sizeof(finalPath));
+		strncat(finalPath, Req_Path, sizeof(finalPath));
 
 		// printf("\nfinalPath: %s\n", finalPath); // Use for debugging
 
