@@ -16,7 +16,8 @@ int main (int argc, char *argv[]) {
 	int sockfd, newsockfd;	// File descriptors, store the values returned by the socket system call and the accept system call
 	int portno; 			// Port number for the server
 	int clilen; 			// Size of the address of the client, needed for the accept system call
-	int pid;				// Used for forking
+	pid_t pid;				// Used for forking
+	int status;				// Used for forking
 
 	/* Check for arguments */
 	if (argc < 2)
@@ -79,7 +80,9 @@ int main (int argc, char *argv[]) {
 		else
 			close(newsockfd);
 
-		waitpid(-1, NULL, WNOHANG); // Let child process die (we don't want the zombie problem)
+		pid = wait(&status);
+		printf("PID: %d exited by signal: %d\n", pid, status);
+		//waitpid(-1, NULL, WNOHANG); // Let child process die (we don't want the zombie problem)
 	}
 
 	/* We'll never get past this point due to the infinite loop above */
