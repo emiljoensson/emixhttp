@@ -80,9 +80,7 @@ int main (int argc, char *argv[]) {
 		else
 			close(newsockfd);
 
-		pid = wait(&status);
-		printf("PID: %d exited by signal: %d\n", pid, status);
-		//waitpid(-1, NULL, WNOHANG); // Let child process die (we don't want the zombie problem)
+		pid = wait(&status); // Waiting for child process to die
 	}
 
 	/* We'll never get past this point due to the infinite loop above */
