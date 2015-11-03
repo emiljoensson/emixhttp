@@ -167,7 +167,7 @@ void new_connection(int sock) {
 		fseek(file, 0, SEEK_END);
 		rewind(file);
 		int line;
-		write(sock,"\n\n",4); // Making two line breaks between headers and body
+		write(sock,"\n\n",2); // Making two line breaks between headers and body
 		while(bytes < FileLength){
 			line = fread(sdbuf, 1, sizeof(sdbuf), file);
 			bytes += line;
